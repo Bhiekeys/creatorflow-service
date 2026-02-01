@@ -3,13 +3,19 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 
-// Connect to database
-connectDB();
-
 const app = express();
 
 // Middleware
 app.use(cors());
+// Ensure DB is connected on each request (cached in serverless)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -73,8 +79,18 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Only listen when running locally (not on Vercel serverless)
+if (!process.env.VERCEL) {
+  connectDB()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('Failed to start server:', err.message);
+      process.exit(1);
+    });
+}
 
 module.exports = app;

@@ -114,6 +114,18 @@ Tokens expire after 30 days.
 - `user` (ObjectId, reference to User)
 - `createdAt` (Date)
 
+## ☁️ Deploy to Vercel
+
+This backend is configured for Vercel serverless deployment:
+
+1. **Connect your repo** to Vercel (or use `vercel` CLI)
+2. **Set environment variables** in Vercel project settings:
+   - `MONGODB_URI` - Your MongoDB Atlas connection string
+   - `JWT_SECRET` - Your JWT secret key
+3. **Deploy** - Vercel auto-detects the Express app from `server.js`
+
+**MongoDB Atlas:** Ensure Network Access allows connections from anywhere (`0.0.0.0/0`) so Vercel's serverless functions can connect.
+
 ## 🔧 Development
 
 To use nodemon for auto-restart during development:

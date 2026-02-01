@@ -1,20 +1,32 @@
 const mongoose = require('mongoose');
 
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
+// Cache connection for serverless (Vercel) - reuse across warm invocations
+let cached = global.mongoose;
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
 
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+const connectDB = async () => {
+  // Already connected
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  // Connection in progress, wait for it
+  if (cached.promise) {
+    return cached.promise;
+  }
+
+  try {
+    cached.promise = mongoose.connect(process.env.MONGODB_URI);
+    cached.conn = await cached.promise;
+    console.log(`MongoDB Connected: ${cached.conn.connection.host}`);
+    return cached.conn;
   } catch (error) {
+    cached.promise = null;
     console.error(`MongoDB connection failed: ${error.message}`);
-    console.error('');
-    console.error('Common fixes:');
-    console.error('  1. Whitelist your IP in MongoDB Atlas:');
-    console.error('     https://www.mongodb.com/docs/atlas/security-whitelist/');
-    console.error('     Atlas → Network Access → Add IP Address (or 0.0.0.0/0 for dev)');
-    console.error('  2. Check MONGODB_URI in backend/.env (correct cluster URL and password?)');
-    console.error('');
-    process.exit(1);
+    console.error('Common fixes: Whitelist IP in MongoDB Atlas, check MONGODB_URI');
+    throw error;
   }
 };
 
