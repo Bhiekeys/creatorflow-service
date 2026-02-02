@@ -17,8 +17,17 @@ const connectDB = async () => {
     return cached.promise;
   }
 
+  const uri = process.env.MONGODB_URI;
+  if (!uri || typeof uri !== 'string') {
+    const err = new Error(
+      'MONGODB_URI is not set. Add it in Vercel: Project → Settings → Environment Variables (e.g. your MongoDB Atlas connection string).'
+    );
+    console.error(err.message);
+    throw err;
+  }
+
   try {
-    cached.promise = mongoose.connect(process.env.MONGODB_URI);
+    cached.promise = mongoose.connect(uri);
     cached.conn = await cached.promise;
     console.log(`MongoDB Connected: ${cached.conn.connection.host}`);
     return cached.conn;
